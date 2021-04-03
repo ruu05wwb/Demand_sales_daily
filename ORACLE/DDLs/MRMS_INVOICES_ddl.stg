@@ -1,4 +1,3 @@
--- Unable to render TABLE DDL for object DWSEAI01.MRMS_INVOICES with DBMS_METADATA attempting internal generator.
 CREATE TABLE DWSEAI01.MRMS_INVOICES 
 (
   AFF_ID NUMBER(38, 0) 
