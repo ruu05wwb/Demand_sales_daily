@@ -255,12 +255,12 @@ SELECT *
         CAST(OORDLIN.ord_item_cd AS      VARCHAR2(960 BYTE))   AS ord_item_cd,
         CAST(OORDLIN.shp_item_cd AS      VARCHAR2(240 CHAR))   AS shp_item_cd,
         CASE
-          WHEN INSTR(REGEXP_REPLACE(SUBSTR(TRIM(CAST(OORDLIN.ord_item_cd AS VARCHAR2(15 CHAR))), 4, LENGTH(TRIM(CAST(OORDLIN.ord_item_cd AS VARCHAR2(15 CHAR))))                                                                -3), '[B-Z]', 'A'), 'A')>0
+          WHEN INSTR(REGEXP_REPLACE(SUBSTR(TRIM(CAST(OORDLIN.ord_item_cd AS VARCHAR2(15 CHAR))), 5, LENGTH(TRIM(CAST(OORDLIN.ord_item_cd AS VARCHAR2(15 CHAR))))                                                                -3), '[B-Z]', 'A'), 'A')>0
           THEN SUBSTR(TRIM(CAST(OORDLIN.ord_item_cd AS VARCHAR2(15 CHAR))), 1, INSTR(REGEXP_REPLACE(SUBSTR(TRIM(CAST(OORDLIN.ord_item_cd AS VARCHAR2(15 CHAR))), 4, LENGTH(TRIM(CAST(OORDLIN.ord_item_cd AS VARCHAR2(15 CHAR))))-3), '[B-Z]', 'A'), 'A')+ 2)
           ELSE TRIM(CAST(OORDLIN.ord_item_cd AS VARCHAR2(15 CHAR)))
         END AS ord_item_base_cd,
         CASE
-          WHEN INSTR(REGEXP_REPLACE(SUBSTR(TRIM(CAST(OORDLIN.shp_item_cd AS VARCHAR2(15 CHAR))), 4, LENGTH(TRIM(CAST(OORDLIN.shp_item_cd AS VARCHAR2(15 CHAR))))                                                                -3), '[B-Z]', 'A'), 'A')>0
+          WHEN INSTR(REGEXP_REPLACE(SUBSTR(TRIM(CAST(OORDLIN.shp_item_cd AS VARCHAR2(15 CHAR))), 5, LENGTH(TRIM(CAST(OORDLIN.shp_item_cd AS VARCHAR2(15 CHAR))))                                                                -3), '[B-Z]', 'A'), 'A')>0
           THEN SUBSTR(TRIM(CAST(OORDLIN.shp_item_cd AS VARCHAR2(15 CHAR))), 1, INSTR(REGEXP_REPLACE(SUBSTR(TRIM(CAST(OORDLIN.shp_item_cd AS VARCHAR2(15 CHAR))), 4, LENGTH(TRIM(CAST(OORDLIN.shp_item_cd AS VARCHAR2(15 CHAR))))-3), '[B-Z]', 'A'), 'A')+ 2)
           ELSE TRIM(CAST(OORDLIN.shp_item_cd AS VARCHAR2(15 CHAR)))
         END                                               AS shp_item_base_cd,
