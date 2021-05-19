@@ -174,13 +174,13 @@
         CAST(OORDLIN.SHP_ITEM_CD AS VARCHAR2(240 CHAR)) AS SHP_ITEM_CD,
         CAST (
         CASE
-          WHEN INSTR(regexp_replace(SUBSTR(OORDLIN.ORD_ITEM_CD, 4, LENGTH(OORDLIN.ORD_ITEM_CD)                               -3), '[B-Z]', 'A'), 'A') > 0
+          WHEN INSTR(regexp_replace(SUBSTR(OORDLIN.ORD_ITEM_CD, 5, LENGTH(OORDLIN.ORD_ITEM_CD)                               -3), '[B-Z]', 'A'), 'A') > 0
           THEN SUBSTR(OORDLIN.ORD_ITEM_CD, 1, INSTR(regexp_replace(SUBSTR(OORDLIN.ORD_ITEM_CD, 4, LENGTH(OORDLIN.ORD_ITEM_CD)-3), '[B-Z]', 'A'), 'A')+ 2)
           ELSE OORDLIN.ORD_ITEM_CD
         END AS VARCHAR2(240 CHAR)) AS ORD_ITEM_BASE_CD,
         CAST (
         CASE
-          WHEN INSTR(regexp_replace(SUBSTR(OORDLIN.SHP_ITEM_CD, 4, LENGTH(OORDLIN.SHP_ITEM_CD)                               -3), '[B-Z]', 'A'), 'A') > 0
+          WHEN INSTR(regexp_replace(SUBSTR(OORDLIN.SHP_ITEM_CD, 5, LENGTH(OORDLIN.SHP_ITEM_CD)                               -3), '[B-Z]', 'A'), 'A') > 0
           THEN SUBSTR(OORDLIN.SHP_ITEM_CD, 1, INSTR(regexp_replace(SUBSTR(OORDLIN.SHP_ITEM_CD, 4, LENGTH(OORDLIN.SHP_ITEM_CD)-3), '[B-Z]', 'A'), 'A')+ 2)
           ELSE OORDLIN.SHP_ITEM_CD
         END AS VARCHAR2(240 CHAR)) AS SHP_ITEM_BASE_CD,
