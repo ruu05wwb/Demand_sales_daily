@@ -51,9 +51,21 @@ SELECT *
             ELSE 'true'
           END) AS           VARCHAR2(5))        AS ORD_SHP_FLAG,
           CAST (ORD_TYPE AS VARCHAR2(240 CHAR)) AS ORD_TYPE_CD,
-          VOL_IMC_NO AS VOL_ACCOUNT_ID,
-          ORD_IMC_NO AS ORD_ACCOUNT_ID,
-          SHP_IMC_NO AS SHP_ACCOUNT_ID
+          CASE
+            WHEN SUBSTR(VOL_IMC_NO, 1, 3) = '570'
+            THEN CAST (SUBSTR(VOL_IMC_NO, 4) AS NUMBER(38))
+            ELSE CAST (VOL_IMC_NO AS            NUMBER(38))
+          END AS VOL_ACCOUNT_ID,
+          CASE
+            WHEN SUBSTR(ORD_IMC_NO, 1, 3) = '570'
+            THEN CAST (SUBSTR(ORD_IMC_NO, 4) AS NUMBER(38))
+            ELSE CAST (ORD_IMC_NO AS            NUMBER(38))
+          END AS ORD_ACCOUNT_ID,
+          CASE
+            WHEN SUBSTR(SHP_IMC_NO, 1, 3) = '570'
+            THEN CAST (SUBSTR(SHP_IMC_NO, 4) AS NUMBER(38))
+            ELSE CAST (SHP_IMC_NO AS            NUMBER(38))
+          END                        AS SHP_ACCOUNT_ID
         FROM DWSATM01.DWT42000_ORD_HDR_ATLAS
         WHERE INTGRT_AFF_CD = '570'
           --AND OORDDTA.SHP_IMC_NO in ('10002','10003','10007','10009')
