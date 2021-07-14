@@ -1,4 +1,4 @@
-  SELECT *
+SELECT *
       FROM
         (WITH OORDDTA AS
         (SELECT COALESCE(T0.INTGRT_CNTRY_CD, T0.CNTRY_CD)                                                         AS oper_cntry_cd,
@@ -8,9 +8,6 @@
           ORD_DT                                                                                                  AS ord_dt,
           EXTRACT(YEAR FROM ORD_DT) *10000+EXTRACT(MONTH FROM ORD_DT)*100+EXTRACT(DAY FROM ORD_DT)                AS ord_dt_key_no,
           EXTRACT(YEAR FROM ORD_DT) *100+EXTRACT(MONTH FROM ORD_DT)                                               AS ord_mo_yr_id,
-          LAST_SHP_DT                                                                                             AS shp_dt,
-          EXTRACT(YEAR FROM LAST_SHP_DT) *10000+EXTRACT(MONTH FROM LAST_SHP_DT)*100+EXTRACT(DAY FROM LAST_SHP_DT) AS shp_dt_key_no,
-          EXTRACT(YEAR FROM LAST_SHP_DT) *100+EXTRACT(MONTH FROM LAST_SHP_DT)                                     AS shp_mo_yr_id,
           CASE
             WHEN COMB_ORD_FLG='Y'
             THEN 'true'
@@ -65,7 +62,7 @@
             WHEN ORD_SHP_FLG='Y'
             THEN 'true'
             ELSE 'false'
-          END AS ord_shp_flag,
+          END         AS ord_shp_flag,
           PAY_REQ_FLG AS pay_req_flag,
           CASE
             WHEN ORD_PAY_STAT_CD='PAID'
@@ -83,7 +80,9 @@
         ),
         -----OORDLIN
         OORDLIN AS
-        (SELECT CAST(COALESCE(T0.INTGRT_CNTRY_CD, T0.CNTRY_CD) AS INTEGER) AS oper_cntry_id,
+        (SELECT 
+        INTGRT_CNTRY_CD,
+        CAST(COALESCE(T0.INTGRT_CNTRY_CD, T0.CNTRY_CD) AS INTEGER) AS oper_cntry_id,
           ORD_NO                                                           AS ord_id,
           CAST(ORD_LN_NO AS INTEGER)                                       AS ord_ln_id,
           CAST(REF_LN_NO AS INTEGER)                                       AS ref_ln_id,
@@ -103,47 +102,52 @@
             ELSE 0
           END                                                                                                  AS ord_qty,
           CAST(ITEM_QTY_AMT AS FLOAT)                                                                          AS shp_qty,
-          POS_CONSLTNT_ID                                                                                      AS consultant_id,
-          EST_SHP_DT                                                                                           AS shp_dt,
-          EXTRACT(YEAR FROM EST_SHP_DT) *10000+EXTRACT(MONTH FROM EST_SHP_DT)*100+EXTRACT(DAY FROM EST_SHP_DT) AS shp_dt_key_no,
-          EXTRACT(YEAR FROM EST_SHP_DT) *100+EXTRACT(MONTH FROM EST_SHP_DT)                                    AS shp_mo_yr_id
+          POS_CONSLTNT_ID                                                                                      AS consultant_id
         FROM DWSATM01.DWT42131_ORD_LN_HYB T0
         WHERE COALESCE(INTGRT_AFF_CD, AFF_CD) IN ('160', '090', '470', '250', '430', '420', '060', '110', '210')
-        )
-      -----Main
-      SELECT OORDDTA.oper_aff_id                                                     AS oper_aff_id,
-        OORDDTA.oper_cntry_id                                                        AS oper_cntry_id,
-        OORDDTA.shp_cntry_id                                                         AS shp_cntry_id,
-        OORDDTA.ord_dt                                                               AS ord_dt,
-        CAST(OORDDTA.ord_dt_key_no AS NUMBER(8, 0))                                  AS ord_dt_key_no,
-        CAST(OORDDTA.ord_mo_yr_id AS  NUMBER(6, 0))                                  AS ord_mo_yr_id,
-        COALESCE(OORDLIN.shp_dt, OORDDTA.shp_dt)                                     AS shp_dt,
-        CAST(COALESCE(OORDLIN.shp_dt_key_no, OORDDTA.shp_dt_key_no) AS NUMBER(8, 0)) AS shp_dt_key_no,
-        CAST(COALESCE(OORDLIN.shp_mo_yr_id, OORDDTA.shp_mo_yr_id) AS   NUMBER(6, 0)) AS shp_mo_yr_id,
-        OORDDTA.comb_ord_flag                                                        AS comb_ord_flag,
-        OORDDTA.comb_ord_id                                                          AS comb_ord_id,
-        OORDDTA.ord_id                                                               AS ord_id,
-        OORDDTA.inv_cd                                                               AS inv_cd,
-        OORDDTA.curcy_cd                                                             AS curcy_cd,
-        OORDDTA.ord_channel                                                          AS ord_channel,
-        OORDDTA.whse_cd                                                              AS whse_cd,
-        OORDDTA.ord_whse_cd                                                          AS ord_whse_cd,
-        OORDDTA.shp_postal_cd                                                        AS shp_postal_cd,
-        OORDDTA.account_id                                                           AS account_id,
-        OORDDTA.imc_type_ord                                                         AS account_type_ord,
-        OORDDTA.vol_account_id                                                       AS vol_account_id,
-        OORDDTA.ord_account_id                                                       AS ord_account_id,
-        OORDDTA.shp_account_id                                                       AS shp_account_id,
-        OORDDTA.ord_canc_flag                                                        AS ord_canc_flag,
-        OORDDTA.ord_shp_flag                                                         AS ord_shp_flag,
-        OORDDTA.pay_req_flag                                                         AS pay_req_flag,
-        OORDDTA.ord_paid_flag                                                        AS ord_paid_flag,
-        CAST(OORDDTA.org_ord_id AS NUMBER)                                           AS org_ord_id,
-        OORDDTA.ord_type_cd                                                          AS ord_type_cd,
-        OORDDTA.drop_cd                                                              AS drop_cd,
-        OORDDTA.delivery_fee_net                                                     AS delivery_fee_net,
-        OORDLIN.ord_ln_id                                                            AS ord_ln_id,
-        OORDLIN.ref_ln_id                                                            AS ref_ln_id,
+        ),
+        ORD_CONSIGN_HYB AS
+        (SELECT INTGRT_CNTRY_CD,
+          CAST(DWT42134_ORD_CONSIGN_HYB.ORD_NO AS INTEGER) AS ORD_NO,
+          MAX(DWT42134_ORD_CONSIGN_HYB.SHP_DT) SHP_DT
+        FROM DWSATM01.DWT42134_ORD_CONSIGN_HYB DWT42134_ORD_CONSIGN_HYB
+        WHERE INTGRT_CNTRY_CD IN ('210','080','060','160','120','090','470','460','280','370','270','250','110','430','830','420')
+        GROUP BY INTGRT_CNTRY_CD,
+          CAST(DWT42134_ORD_CONSIGN_HYB.ORD_NO AS INTEGER)
+        ) -----Main
+      SELECT OORDDTA.oper_aff_id                                                                                                                                           AS oper_aff_id,
+        OORDDTA.oper_cntry_id                                                                                                                                              AS oper_cntry_id,
+        OORDDTA.shp_cntry_id                                                                                                                                               AS shp_cntry_id,
+        OORDDTA.ord_dt                                                                                                                                                     AS ord_dt,
+        CAST(OORDDTA.ord_dt_key_no AS NUMBER(8, 0))                                                                                                                        AS ord_dt_key_no,
+        CAST(OORDDTA.ord_mo_yr_id AS  NUMBER(6, 0))                                                                                                                        AS ord_mo_yr_id,
+        ORD_CONSIGN_HYB.SHP_DT                                                                                                                                             AS shp_dt,
+        CAST( EXTRACT(YEAR FROM ORD_CONSIGN_HYB.SHP_DT ) *10000+EXTRACT(MONTH FROM ORD_CONSIGN_HYB.SHP_DT )*100+EXTRACT(DAY FROM ORD_CONSIGN_HYB.SHP_DT ) AS NUMBER(8, 0)) AS shp_dt_key_no,
+        CAST(EXTRACT(YEAR FROM ORD_CONSIGN_HYB.SHP_DT )  *100+EXTRACT(MONTH FROM ORD_CONSIGN_HYB.SHP_DT ) AS                                                 NUMBER(6, 0)) AS shp_mo_yr_id,
+        OORDDTA.comb_ord_flag                                                                                                                                              AS comb_ord_flag,
+        OORDDTA.comb_ord_id                                                                                                                                                AS comb_ord_id,
+        OORDDTA.ord_id                                                                                                                                                     AS ord_id,
+        OORDDTA.inv_cd                                                                                                                                                     AS inv_cd,
+        OORDDTA.curcy_cd                                                                                                                                                   AS curcy_cd,
+        OORDDTA.ord_channel                                                                                                                                                AS ord_channel,
+        OORDDTA.whse_cd                                                                                                                                                    AS whse_cd,
+        OORDDTA.ord_whse_cd                                                                                                                                                AS ord_whse_cd,
+        OORDDTA.shp_postal_cd                                                                                                                                              AS shp_postal_cd,
+        OORDDTA.account_id                                                                                                                                                 AS account_id,
+        OORDDTA.imc_type_ord                                                                                                                                               AS account_type_ord,
+        OORDDTA.vol_account_id                                                                                                                                             AS vol_account_id,
+        OORDDTA.ord_account_id                                                                                                                                             AS ord_account_id,
+        OORDDTA.shp_account_id                                                                                                                                             AS shp_account_id,
+        OORDDTA.ord_canc_flag                                                                                                                                              AS ord_canc_flag,
+        OORDDTA.ord_shp_flag                                                                                                                                               AS ord_shp_flag,
+        OORDDTA.pay_req_flag                                                                                                                                               AS pay_req_flag,
+        OORDDTA.ord_paid_flag                                                                                                                                              AS ord_paid_flag,
+        CAST(OORDDTA.org_ord_id AS NUMBER)                                                                                                                                 AS org_ord_id,
+        OORDDTA.ord_type_cd                                                                                                                                                AS ord_type_cd,
+        OORDDTA.drop_cd                                                                                                                                                    AS drop_cd,
+        OORDDTA.delivery_fee_net                                                                                                                                           AS delivery_fee_net,
+        OORDLIN.ord_ln_id                                                                                                                                                  AS ord_ln_id,
+        OORDLIN.ref_ln_id                                                                                                                                                  AS ref_ln_id,
         OORDLIN.ord_ln_disp_cd,
         OORDLIN.ord_item_cd AS ord_item_cd,
         OORDLIN.shp_item_cd AS shp_item_cd,
@@ -169,5 +173,7 @@
       LEFT JOIN OORDDTA OORDDTA
       ON OORDLIN.ord_id        =OORDDTA.ord_id
       AND OORDLIN.oper_cntry_id=OORDDTA.oper_cntry_id
-      WHERE OORDDTA.ORD_ID    IS NOT NULL
-        )
+      LEFT JOIN ORD_CONSIGN_HYB ORD_CONSIGN_HYB
+      ON OORDLIN.ord_id          =ORD_CONSIGN_HYB.ORD_NO
+      AND OORDLIN.INTGRT_CNTRY_CD=ORD_CONSIGN_HYB.INTGRT_CNTRY_CD
+      WHERE OORDDTA.ORD_ID      IS NOT NULL
