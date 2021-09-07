@@ -1,13 +1,13 @@
-SELECT *
+      SELECT *
       FROM
         (WITH OORDDTA AS
-        (SELECT COALESCE(T0.INTGRT_CNTRY_CD, T0.CNTRY_CD)                                                         AS oper_cntry_cd,
-          CAST(COALESCE(T0.INTGRT_CNTRY_CD, T0.CNTRY_CD) AS INTEGER)                                              AS oper_cntry_id,
-          CAST(COALESCE(INTGRT_AFF_CD, AFF_CD) AS           INTEGER)                                              AS oper_aff_id,
-          CAST(DLVRY_ADDR_AMWAY_CNTRY_CD AS                 INTEGER)                                              AS shp_cntry_id,
-          ORD_DT                                                                                                  AS ord_dt,
-          EXTRACT(YEAR FROM ORD_DT) *10000+EXTRACT(MONTH FROM ORD_DT)*100+EXTRACT(DAY FROM ORD_DT)                AS ord_dt_key_no,
-          EXTRACT(YEAR FROM ORD_DT) *100+EXTRACT(MONTH FROM ORD_DT)                                               AS ord_mo_yr_id,
+        (SELECT COALESCE(T0.INTGRT_CNTRY_CD, T0.CNTRY_CD)                                          AS oper_cntry_cd,
+          CAST(COALESCE(T0.INTGRT_CNTRY_CD, T0.CNTRY_CD) AS INTEGER)                               AS oper_cntry_id,
+          CAST(COALESCE(INTGRT_AFF_CD, AFF_CD) AS           INTEGER)                               AS oper_aff_id,
+          CAST(DLVRY_ADDR_AMWAY_CNTRY_CD AS                 INTEGER)                               AS shp_cntry_id,
+          ORD_DT                                                                                   AS ord_dt,
+          EXTRACT(YEAR FROM ORD_DT) *10000+EXTRACT(MONTH FROM ORD_DT)*100+EXTRACT(DAY FROM ORD_DT) AS ord_dt_key_no,
+          EXTRACT(YEAR FROM ORD_DT) *100+EXTRACT(MONTH FROM ORD_DT)                                AS ord_mo_yr_id,
           CASE
             WHEN COMB_ORD_FLG='Y'
             THEN 'true'
@@ -29,6 +29,11 @@ SELECT *
             AND VOL_IMC_NO                                 ='8')
             OR (COALESCE(T0.INTGRT_CNTRY_CD, T0.CNTRY_CD) IN ('210', '080', '110')
             AND VOL_IMC_NO                                 ='3')
+            OR (COALESCE(T0.INTGRT_CNTRY_CD, T0.CNTRY_CD) IN ('480')
+            AND VOL_IMC_NO                                 ='5')
+            OR (COALESCE(T0.INTGRT_CNTRY_CD, T0.CNTRY_CD) IN ('620','650','390','800','340','820','810','150','590','490','140','450')
+            AND VOL_IMC_NO                                 =COALESCE(T0.INTGRT_CNTRY_CD, T0.CNTRY_CD))
+              /*In Eastern Europe, dummy ids are equal to country code, excepting Ukraine*/
             THEN DWSEAI01.STR2INT(RPAD(TRIM(DLVRY_ADDR_FAM_NM
               ||DLVRY_ADDR_GIVEN_NM),7,'X'))
             ELSE CAST(BILL_IMC_NO AS INTEGER)
@@ -40,6 +45,11 @@ SELECT *
             AND VOL_IMC_NO                                 ='8')
             OR (COALESCE(T0.INTGRT_CNTRY_CD, T0.CNTRY_CD) IN ('210', '080', '110')
             AND VOL_IMC_NO                                 ='3')
+            OR (COALESCE(T0.INTGRT_CNTRY_CD, T0.CNTRY_CD) IN ('480')
+            AND VOL_IMC_NO                                 ='5')
+            OR (COALESCE(T0.INTGRT_CNTRY_CD, T0.CNTRY_CD) IN ('620','650','390','800','340','820','810','150','590','490','140','450')
+            AND VOL_IMC_NO                                 =COALESCE(T0.INTGRT_CNTRY_CD, T0.CNTRY_CD))
+              /*In Eastern Europe, dummy ids are equal to country code, excepting Ukraine*/
             THEN 'FOA'
             ELSE
               CASE
@@ -75,21 +85,22 @@ SELECT *
           DLVRY_ACTUAL_COST_CURCY_AMT AS delivery_fee_net,
           DLVRY_MODE_CD               AS delivery_mode_cd
         FROM DWSATM01.DWT42130_ORD_HDR_HYB T0
-        WHERE NVL(INTGRT_AFF_CD, AFF_CD)                                IN ('160', '090', '470', '250', '430', '420', '060', '110', '210')
-        AND EXTRACT(YEAR FROM ORD_DT)     *100+EXTRACT(MONTH FROM ORD_DT)=YEARMONTH
+        WHERE (NVL(INTGRT_AFF_CD, AFF_CD)                           IN ('160', '090', '470', '250', '430', '420', '060', '110', '210')
+        OR (NVL(INTGRT_AFF_CD, AFF_CD)                              IN ('150', '480')
+        AND YEARMONTH                                               >=202109))
+        AND EXTRACT(YEAR FROM ORD_DT) *100+EXTRACT(MONTH FROM ORD_DT)=YEARMONTH
         ),
         -----OORDLIN
         OORDLIN AS
-        (SELECT 
-        INTGRT_CNTRY_CD,
-        CAST(COALESCE(T0.INTGRT_CNTRY_CD, T0.CNTRY_CD) AS INTEGER) AS oper_cntry_id,
-          ORD_NO                                                           AS ord_id,
-          CAST(ORD_LN_NO AS INTEGER)                                       AS ord_ln_id,
-          CAST(REF_LN_NO AS INTEGER)                                       AS ref_ln_id,
-          ITEM_DISP_DESC                                                   AS ord_ln_disp_cd,
-          trim(COALESCE(ORD_CD, ITEM_ID))                                  AS ord_item_cd,
-          trim(ITEM_ID)                                                    AS shp_item_cd,
-          COALESCE(CAST(ADJ_ITEM_PRICE_AMT AS FLOAT),0)                    AS adj_ln_lc_net,
+        (SELECT INTGRT_CNTRY_CD,
+          CAST(COALESCE(T0.INTGRT_CNTRY_CD, T0.CNTRY_CD) AS INTEGER) AS oper_cntry_id,
+          ORD_NO                                                     AS ord_id,
+          CAST(ORD_LN_NO AS INTEGER)                                 AS ord_ln_id,
+          CAST(REF_LN_NO AS INTEGER)                                 AS ref_ln_id,
+          ITEM_DISP_DESC                                             AS ord_ln_disp_cd,
+          trim(COALESCE(ORD_CD, ITEM_ID))                            AS ord_item_cd,
+          trim(ITEM_ID)                                              AS shp_item_cd,
+          COALESCE(CAST(ADJ_ITEM_PRICE_AMT AS FLOAT),0)              AS adj_ln_lc_net,
           CASE
             WHEN COALESCE(T0.INTGRT_CNTRY_CD, T0.CNTRY_CD)='430'
             THEN TOT_PV_AMT
@@ -100,18 +111,22 @@ SELECT *
             WHEN MIN(ORD_LN_NO) over (partition BY COALESCE(T0.INTGRT_CNTRY_CD, T0.CNTRY_CD), ORD_NO, COALESCE(ORD_CD, ITEM_ID))=ORD_LN_NO
             THEN CAST(COALESCE(COMPNT_QTY, ITEM_QTY_AMT) AS FLOAT)
             ELSE 0
-          END                                                                                                  AS ord_qty,
-          CAST(ITEM_QTY_AMT AS FLOAT)                                                                          AS shp_qty,
-          POS_CONSLTNT_ID                                                                                      AS consultant_id
+          END                         AS ord_qty,
+          CAST(ITEM_QTY_AMT AS FLOAT) AS shp_qty,
+          POS_CONSLTNT_ID             AS consultant_id
         FROM DWSATM01.DWT42131_ORD_LN_HYB T0
-        WHERE COALESCE(INTGRT_AFF_CD, AFF_CD) IN ('160', '090', '470', '250', '430', '420', '060', '110', '210')
+        WHERE (COALESCE(INTGRT_AFF_CD, AFF_CD) IN ('160', '090', '470', '250', '430', '420', '060', '110', '210')
+        OR (COALESCE(INTGRT_AFF_CD, AFF_CD)    IN ('150', '480')
+        AND YEARMONTH                          >=202109))
         ),
         ORD_CONSIGN_HYB AS
         (SELECT INTGRT_CNTRY_CD,
           CAST(DWT42134_ORD_CONSIGN_HYB.ORD_NO AS INTEGER) AS ORD_NO,
           MAX(DWT42134_ORD_CONSIGN_HYB.SHP_DT) SHP_DT
         FROM DWSATM01.DWT42134_ORD_CONSIGN_HYB DWT42134_ORD_CONSIGN_HYB
-        WHERE INTGRT_CNTRY_CD IN ('210','080','060','160','120','090','470','460','280','370','270','250','110','430','830','420')
+        WHERE (INTGRT_CNTRY_CD IN ('210','080','060','160','120','090','470','460','280','370','270','250','110','430','830','420')
+        OR (INTGRT_CNTRY_CD    IN ('620','650','390','800','340','820','810','150','590','490','140','450','660','480')
+        AND YEARMONTH          >=202109))
         GROUP BY INTGRT_CNTRY_CD,
           CAST(DWT42134_ORD_CONSIGN_HYB.ORD_NO AS INTEGER)
         ) -----Main
@@ -177,3 +192,4 @@ SELECT *
       ON OORDLIN.ord_id          =ORD_CONSIGN_HYB.ORD_NO
       AND OORDLIN.INTGRT_CNTRY_CD=ORD_CONSIGN_HYB.INTGRT_CNTRY_CD
       WHERE OORDDTA.ORD_ID      IS NOT NULL
+        )
