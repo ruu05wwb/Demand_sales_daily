@@ -1,4 +1,4 @@
-SELECT *
+     SELECT *
       FROM
         (WITH ORD_HDR AS
         (SELECT ORD,
@@ -18,12 +18,14 @@ SELECT *
           ORD_PAY_STAT,
           COALESCE(ORD_TAX/NULLIF(ORD_VALUE-ORD_TAX, 0), 0)              AS ord_tax_rt,
           CAST(COALESCE(TRIM(CTL_AFF), TRIM(INTGRT_CTL_AFF)) AS INTEGER) AS oper_aff_id,
-          NVL(MAX(CASE
-      WHEN ORD=COMB_ORD
-      THEN CAST(NVL(TRIM(CNTRY),TRIM(INTGRT_CNTRY_CD)) AS VARCHAR2(3 CHAR))
-      ELSE NULL
-    END) OVER(PARTITION BY NVL(TRIM(CTL_AFF),TRIM(INTGRT_CTL_AFF)) , COMB_ORD, SHP_DISTB, ORD_DT),NVL(TRIM(CNTRY),TRIM(INTGRT_CNTRY_CD)))  AS OPER_CNTRY_CD, /*Override oper country assigned to order with oper country assigned to the first suborder of combined order to avoid discrepancy between oper country and currency in Eastern Europe*/
-          COALESCE(TRIM(CNTRY), TRIM(INTGRT_CNTRY_CD))                   AS init_cntry_cd,
+          NVL(MAX(
+          CASE
+            WHEN ORD=COMB_ORD
+            THEN CAST(NVL(TRIM(CNTRY),TRIM(INTGRT_CNTRY_CD)) AS VARCHAR2(3 CHAR))
+            ELSE NULL
+          END) OVER(PARTITION BY NVL(TRIM(CTL_AFF),TRIM(INTGRT_CTL_AFF)) , COMB_ORD, SHP_DISTB, ORD_DT),NVL(TRIM(CNTRY),TRIM(INTGRT_CNTRY_CD))) AS OPER_CNTRY_CD,
+          /*Override oper country assigned to order with oper country assigned to the first suborder of combined order to avoid discrepancy between oper country and currency in Eastern Europe*/
+          COALESCE(TRIM(CNTRY), TRIM(INTGRT_CNTRY_CD)) AS init_cntry_cd,
           VOL_DISTB,
           ORD_DISTB,
           SHP_DISTB,
@@ -44,7 +46,8 @@ SELECT *
             ELSE 'N'
           END AS CUST_ORD_FLG
         FROM DWSATM01.DWT42016_ORD_HDR_OMS
-        WHERE COALESCE(TRIM(CTL_AFF), TRIM(INTGRT_CTL_AFF)) IN ('150', '480', '040')
+        WHERE (COALESCE(TRIM(CTL_AFF), TRIM(INTGRT_CTL_AFF)) IN ('040')
+        OR (COALESCE(TRIM(CTL_AFF), TRIM(INTGRT_CTL_AFF)) IN ('150', '480') AND YEARMONTH<=202108))
         AND ORD_DT BETWEEN YEARMONTH                         *100+1 AND YEARMONTH*100+31
         ),
         OORDDTA AS
@@ -118,15 +121,17 @@ SELECT *
         FROM ORD_HDR ORD_HDR
         LEFT JOIN DWSATM01.dwt42051_ord_sales_chnl ORD_CHNL
         ON CAST(ORD_HDR.init_cntry_cd AS INTEGER)=CAST(ORD_CHNL.CNTRY_CD AS INTEGER)
-        AND ORD_HDR.ORD_TYPE    =ORD_CHNL.ORD_TYPE_CD
-        AND ORD_HDR.ORD_SRC     =ORD_CHNL.ORD_SRC_CD
+        AND ORD_HDR.ORD_TYPE                     =ORD_CHNL.ORD_TYPE_CD
+        AND ORD_HDR.ORD_SRC                      =ORD_CHNL.ORD_SRC_CD
         LEFT JOIN
           (SELECT CAST(COALESCE(TRIM(INTGRT_AFF_CD), TRIM(CTL_AFF)) AS INTEGER) AS aff_id,
             DISTB_NBR,
             ADR_SEQ,
             TRIM(POST) AS postal_cd
           FROM DWSATM01.DWT41052_DISTB_ADR
-          WHERE CAST(COALESCE(TRIM(INTGRT_AFF_CD), TRIM(CTL_AFF)) AS INTEGER) IN (150, 480, 40)
+          WHERE 
+          (CAST(COALESCE(TRIM(INTGRT_AFF_CD), TRIM(CTL_AFF)) AS INTEGER) IN (040)
+        OR (CAST(COALESCE(TRIM(INTGRT_AFF_CD), TRIM(CTL_AFF)) AS INTEGER) IN (150, 480) AND YEARMONTH<=202108))
           ) DDSTADR
         ON ORD_HDR.SHP_DISTB   =DDSTADR.DISTB_NBR
         AND ORD_HDR.oper_aff_id=DDSTADR.aff_id
